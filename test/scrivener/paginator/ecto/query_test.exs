@@ -143,6 +143,23 @@ defmodule Scrivener.Paginator.Ecto.QueryTest do
       assert page.total_pages == 2
     end
 
+    test "can be provided the padding with page number and page size options" do
+      posts = create_posts()
+
+      page =
+        Post
+        |> Post.published()
+        |> Scrivener.Ecto.Repo.paginate(page: 1, page_size: 2, padding: 2)
+
+      entries = posts |> Enum.drop(2) |> Enum.drop(-2)
+
+      assert page.page_size == 2
+      assert page.page_number == 1
+      assert page.entries == entries
+      assert page.total_entries == 4
+      assert page.total_pages == 2
+    end
+
     test "can be provided the caller as options" do
       create_posts()
       parent = self()
@@ -198,6 +215,7 @@ defmodule Scrivener.Paginator.Ecto.QueryTest do
         module: Scrivener.Ecto.Repo,
         page_number: 2,
         page_size: 4,
+        padding: 0,
         options: [total_entries: 130]
       }
 
@@ -226,6 +244,7 @@ defmodule Scrivener.Paginator.Ecto.QueryTest do
       config = %Scrivener.Config{
         module: Scrivener.Ecto.Repo,
         page_number: 2,
+        padding: 0,
         page_size: length(posts),
         options: []
       }
@@ -308,6 +327,7 @@ defmodule Scrivener.Paginator.Ecto.QueryTest do
         module: Scrivener.Ecto.Repo,
         page_number: 2,
         page_size: 4,
+        padding: 0,
         options: []
       }
 

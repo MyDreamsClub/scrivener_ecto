@@ -9,12 +9,13 @@ defimpl Scrivener.Paginater, for: Ecto.Query do
   def paginate(query, %Config{
         page_size: page_size,
         page_number: page_number,
+        padding: padding,
         module: repo,
         caller: caller,
         options: options
       }) do
     total_entries =
-      Keyword.get_lazy(options, :total_entries, fn -> total_entries(query, repo, caller) end)
+      Keyword.get_lazy(options, :total_entries, fn -> total_entries(query, repo, caller, padding) end)
 
     total_pages = total_pages(total_entries, page_size)
     page_number = min(total_pages, page_number)
@@ -22,14 +23,14 @@ defimpl Scrivener.Paginater, for: Ecto.Query do
     %Page{
       page_size: page_size,
       page_number: page_number,
-      entries: entries(query, repo, page_number, page_size, caller),
+      entries: entries(query, repo, page_number, page_size, padding, caller),
       total_entries: total_entries,
       total_pages: total_pages
     }
   end
 
-  defp entries(query, repo, page_number, page_size, caller) do
-    offset = page_size * (page_number - 1)
+  defp entries(query, repo, page_number, page_size, padding, caller) do
+    offset = padding + page_size * (page_number - 1)
 
     query
     |> limit(^page_size)
@@ -37,7 +38,7 @@ defimpl Scrivener.Paginater, for: Ecto.Query do
     |> repo.all(caller: caller)
   end
 
-  defp total_entries(query, repo, caller) do
+  defp total_entries(query, repo, caller, padding) do
     total_entries =
       query
       |> exclude(:preload)
@@ -46,7 +47,7 @@ defimpl Scrivener.Paginater, for: Ecto.Query do
       |> count
       |> repo.one(caller: caller)
 
-    total_entries || 0
+    (total_entries - padding) || 0
   end
 
   defp prepare_select(
