@@ -143,6 +143,7 @@ defmodule Scrivener.Paginator.Ecto.QueryTest do
       assert page.total_pages == 2
     end
 
+
     test "can be provided the padding with page number and page size options" do
       posts = create_posts()
 
@@ -158,6 +159,19 @@ defmodule Scrivener.Paginator.Ecto.QueryTest do
       assert page.entries == entries
       assert page.total_entries == 4
       assert page.total_pages == 2
+    end
+
+    test "it returns blank data and requested page number when entries is less than requested" do
+      posts = create_posts()
+
+      page =
+        Post
+        |> Scrivener.Ecto.Repo.paginate(page: 5, page_size: 3)
+
+      assert page.page_size == 3
+      assert page.page_number == 5
+      assert page.entries == []
+      assert page.total_pages == 3
     end
 
     test "can be provided the caller as options" do
@@ -236,26 +250,6 @@ defmodule Scrivener.Paginator.Ecto.QueryTest do
         |> Scrivener.Ecto.Repo.paginate(options: [total_entries: 130])
 
       assert page.total_entries == 130
-    end
-
-    test "will use total_pages if page_numer is too large" do
-      posts = create_posts()
-
-      config = %Scrivener.Config{
-        module: Scrivener.Ecto.Repo,
-        page_number: 2,
-        padding: 0,
-        page_size: length(posts),
-        options: []
-      }
-
-      page =
-        Post
-        |> Post.published()
-        |> Scrivener.paginate(config)
-
-      assert page.page_number == 1
-      assert page.entries == posts
     end
 
     test "can be used on a table with any primary key" do
